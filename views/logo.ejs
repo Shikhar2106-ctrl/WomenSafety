@@ -1,0 +1,228 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Location Sharing</title>
+    <link rel="stylesheet" href="<%=url%>/css/output.css"> -->
+    <!-- Leaflet CSS -->
+  <!-- <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  
+  <!-- Custom CSS (map size) -->
+  <style>
+    #map { height: 500px; width: 100%; }
+  </style>
+  
+  <!-- Leaflet JavaScript -->
+  <!-- <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/map.js"></script>
+</head>
+<body onload="initMap()">
+    <h1>Live Location Sharing with OpenStreetMap</h1>
+    <button onclick="shareLocation()">Share My Location</button>
+    <div id="map"></div>
+
+    <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+</body>
+</html> --> -->
+
+
+
+
+<!-- /views/index.ejs -->
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Location Tracking with Routing</title>
+
+  <link rel="stylesheet" href="<%=url%>/css/output.css">
+  
+  <!-- Leaflet CSS -->
+  <!-- <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" /> -->
+  
+  <!-- Custom CSS -->
+  <!-- <style>
+    #map { height: 500px; width: 100%; }
+  </style>
+   -->
+  <!-- Leaflet JavaScript -->
+  <!-- <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/map.js"></script>
+</head>
+<body onload="initMap()">
+  <h1>Live Location Tracking and Route Tracking</h1>
+
+  <!-- Button for the tracked person to share their location -->
+  <!-- <button onclick="shareLocation()">Share My Location</button> -->
+  
+  <!-- Button for others to track the route to the tracked person -->
+  <!-- <button onclick="trackRoute()">Track Route to Me</button> -->
+  
+  <!-- Map Container -->
+  <!-- <div id="map"></div> -->
+
+  <!-- <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+</body> -->
+<!-- </html> --> --> -->
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leaflet Routing with Live Location & Click Destination</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+  <!-- Leaflet Routing Machine CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
+
+  <!-- Leaflet Control Geocoder CSS (optional, for search functionality) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+
+  <style>
+    #map { height: 450px; width: 90%; }
+    #searchInput { margin: 10px; padding: 10px; width: 300px; }
+  </style>
+</head>
+<body>
+
+  <input id="searchInput" type="text" placeholder="Enter destination" />
+  <div id="map"></div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <!-- Leaflet Routing Machine JS -->
+  <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+
+  <!-- Leaflet Control Geocoder JS (for searching addresses) -->
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+  <script>
+    // Initialize the map
+    var map = L.map('map').setView([51.505, -0.09], 13); // Default view until geolocation kicks in
+
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19
+    }).addTo(map);
+
+    // Variable to store live location and selected destination
+    var liveLatLng, destinationLatLng, destinationMarker;
+
+    // Locate the user's live position
+    map.locate({ setView: true, maxZoom: 16 });
+
+    // When live location is found
+    map.on('locationfound', function(e) {
+      liveLatLng = e.latlng;
+
+      // Add a marker for live location
+      L.marker(liveLatLng).addTo(map).bindPopup("You are here").openPopup();
+    });
+
+    // Handle location error
+    map.on('locationerror', function(e) {
+      alert("Error getting your location: " + e.message);
+    });
+
+    // Function to calculate and display the route
+    function calculateRoute() {
+      if (!liveLatLng || !destinationLatLng) {
+        alert("Please wait for your live location or select a destination.");
+        return;
+      }
+
+      // Remove existing routing control
+      if (window.routingControl) {
+        map.removeControl(window.routingControl);
+      }
+
+      // Add routing control (from live location to destination)
+      window.routingControl = L.Routing.control({
+        waypoints: [
+          liveLatLng,           // Start: live location
+          destinationLatLng     // End: destination (found through search or click)
+        ],
+        routeWhileDragging: true
+      }).addTo(map);
+
+      // Optionally, fit map to show the route
+      map.fitBounds([liveLatLng, destinationLatLng]);
+    }
+
+    // Search and route functionality when a destination is entered
+    document.getElementById('searchInput').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        var destination = document.getElementById('searchInput').value;
+
+        if (!liveLatLng) {
+          alert("Please wait for your live location to be determined.");
+          return;
+        }
+
+        // Use geocoder to get destination coordinates
+        L.Control.Geocoder.nominatim().geocode(destination, function(results) {
+          if (results && results.length > 0) {
+            // Set the destination based on search result
+            destinationLatLng = results[0].center;
+
+            // Remove previous destination marker
+            if (destinationMarker) {
+              map.removeLayer(destinationMarker);
+            }
+
+            // Add marker at the destination
+            destinationMarker = L.marker(destinationLatLng).addTo(map)
+              .bindPopup("Destination: " + results[0].name)
+              .openPopup();
+
+            // Calculate route
+            calculateRoute();
+          } else {
+            alert("Destination not found. Please try another address.");
+          }
+        });
+      }
+    });
+
+    // Handle click event to set destination
+    map.on('click', function(e) {
+      if (!liveLatLng) {
+        alert("Please wait for your live location to be determined.");
+        return;
+      }
+
+      // Set the destination based on click
+      destinationLatLng = e.latlng;
+
+      // Remove previous destination marker
+      if (destinationMarker) {
+        map.removeLayer(destinationMarker);
+      }
+
+      // Add marker at the clicked location
+      destinationMarker = L.marker(destinationLatLng).addTo(map)
+        .bindPopup("Destination: " + e.latlng.lat + ", " + e.latlng.lng)
+        .openPopup();
+
+      // Calculate route
+      calculateRoute();
+    });
+
+  </script>
+
+</body>
+</html>
+
+
